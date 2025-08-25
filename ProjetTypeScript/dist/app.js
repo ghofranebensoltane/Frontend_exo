@@ -1,13 +1,8 @@
-"use strict";
-console.log("typescript ok");
-let taskInput = document.getElementById("taskInput");
-let btnAdd = document.getElementById("addTask");
-let taskList = document.getElementById("taskList");
-let table = document.querySelector("#taskTable tbody");
-let tasks = [];
-function saveTasks() {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+import { addTask, loadTasksFromStorage, getTasks, deleteTask } from "./task.js";
+import { fetchApiTasks } from "./api.js";
+const taskInput = document.getElementById("taskInput");
+const btnAdd = document.getElementById("addTask");
+const table = document.querySelector("#taskTable tbody");
 function createTaskRow(task) {
     const tr = document.createElement("tr");
     const tdText = document.createElement("td");
@@ -26,7 +21,7 @@ function createTaskRow(task) {
     });
     selectStatus.addEventListener("change", () => {
         task.status = selectStatus.value;
-        saveTasks();
+        addTask(task); // sauvegarde mise à jour
     });
     tdStatus.appendChild(selectStatus);
     const tdActions = document.createElement("td");
@@ -34,9 +29,8 @@ function createTaskRow(task) {
     deleteBtn.textContent = "Supprimer";
     deleteBtn.classList.add("delete-btn");
     deleteBtn.addEventListener("click", () => {
-        tasks = tasks.filter(t => t.id !== task.id);
+        deleteTask(task.id);
         table.removeChild(tr);
-        saveTasks();
     });
     tdActions.appendChild(deleteBtn);
     tr.appendChild(tdText);
@@ -45,65 +39,34 @@ function createTaskRow(task) {
     tr.appendChild(tdActions);
     return tr;
 }
-function addTask() {
+function loadTasksToTable() {
+    loadTasksFromStorage();
+    getTasks().forEach(task => table.appendChild(createTaskRow(task)));
+}
+btnAdd.addEventListener("click", (e) => {
+    e.preventDefault();
     const taskText = taskInput.value.trim();
-    if (taskText === "") {
-        alert("Veuiller entrer une tache !");
-        return;
-    }
+    if (!taskText)
+        return alert("Veuillez entrer une tâche !");
     const newTask = {
         id: Date.now(),
         text: taskText,
         date: new Date().toLocaleString(),
         status: "à faire"
     };
-    tasks.push(newTask);
-    const tr = createTaskRow(newTask);
-    table.appendChild(tr);
-    saveTasks();
+    addTask(newTask);
+    table.appendChild(createTaskRow(newTask));
     taskInput.value = "";
-}
-function loadTasks() {
-    const storedTasks = localStorage.getItem("tasks");
-    if (storedTasks) {
-        tasks = JSON.parse(storedTasks);
-        tasks.forEach(task => {
-            const tr = createTaskRow(task);
-            table.appendChild(tr);
-        });
-    }
-}
-async function fetchApiTasks() {
-    try {
-        const response = await fetch("https://jsonplaceholder.typicode.com/todos?_limit=5");
-        if (!response.ok)
-            throw new Error(`Erreur HTTP : ${response.status}`);
-        const apiTasks = await response.json();
-        apiTasks.forEach(apiTask => {
-            const newTask = {
-                id: apiTask.id + Date.now(), // pour éviter les doublons
-                text: apiTask.title,
-                date: new Date().toLocaleString(),
-                status: apiTask.completed ? "Terminé" : "à faire"
-            };
-            const tr = createTaskRow(newTask);
-            table.appendChild(tr);
-        });
-    }
-    catch (error) {
-        console.error("Erreur lors de la récupération de l’API :", error);
-        alert("Impossible de charger les suggestions de tâches depuis l’API.");
-    }
-}
-btnAdd.addEventListener("click", (event) => {
-    event.preventDefault();
-    addTask();
 });
 taskInput.addEventListener("keypress", (event) => {
     if (event.key === "Enter") {
         event.preventDefault();
-        addTask();
+        btnAdd.click();
     }
 });
-loadTasks();
-fetchApiTasks();
+async function init() {
+    loadTasksToTable();
+    const apiTasks = await fetchApiTasks();
+    apiTasks.forEach(task => table.appendChild(createTaskRow(task)));
+}
+init();
