@@ -73,6 +73,28 @@ function loadTasks() {
         });
     }
 }
+async function fetchApiTasks() {
+    try {
+        const response = await fetch("https://jsonplaceholder.typicode.com/todos?_limit=5");
+        if (!response.ok)
+            throw new Error(`Erreur HTTP : ${response.status}`);
+        const apiTasks = await response.json();
+        apiTasks.forEach(apiTask => {
+            const newTask = {
+                id: apiTask.id + Date.now(), // pour éviter les doublons
+                text: apiTask.title,
+                date: new Date().toLocaleString(),
+                status: apiTask.completed ? "Terminé" : "à faire"
+            };
+            const tr = createTaskRow(newTask);
+            table.appendChild(tr);
+        });
+    }
+    catch (error) {
+        console.error("Erreur lors de la récupération de l’API :", error);
+        alert("Impossible de charger les suggestions de tâches depuis l’API.");
+    }
+}
 btnAdd.addEventListener("click", (event) => {
     event.preventDefault();
     addTask();
@@ -84,3 +106,4 @@ taskInput.addEventListener("keypress", (event) => {
     }
 });
 loadTasks();
+fetchApiTasks();
