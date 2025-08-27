@@ -5,6 +5,7 @@ const btnAdd = document.getElementById("addTask");
 const table = document.querySelector("#taskTable tbody");
 
 console.log("tester le conflit"); 
+console.log('pratiquer git');
 
 
 
