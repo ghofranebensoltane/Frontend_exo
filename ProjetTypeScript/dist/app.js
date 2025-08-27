@@ -3,6 +3,11 @@ import { fetchApiTasks } from "./api.js";
 const taskInput = document.getElementById("taskInput");
 const btnAdd = document.getElementById("addTask");
 const table = document.querySelector("#taskTable tbody");
+
+console.log("tester le conflit"); 
+
+
+
 function createTaskRow(task) {
     const tr = document.createElement("tr");
     const tdText = document.createElement("td");
